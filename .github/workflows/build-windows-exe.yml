@@ -34,6 +34,16 @@ jobs:
         run: |
           choco install wixtoolset -y
 
+      - name: Create custom Java runtime with jlink
+        shell: pwsh
+        run: |
+          $javaHome = $env:JAVA_HOME
+          $jlinkExe = "$javaHome\bin\jlink.exe"
+          
+          # Create a minimal runtime with required modules
+          & $jlinkExe --add-modules java.base,java.desktop,java.prefs,java.management,java.logging,jdk.unsupported `
+            --strip-debug --compress=2 --output java-runtime
+
       - name: Prepare input directory
         run: |
           mkdir pkg-input
@@ -51,7 +61,8 @@ jobs:
             '--main-class', 'com.atbm.App',
             '--type', 'exe',
             '--app-version', '1.0.0',
-            '--win-console'
+            '--win-console',
+            '--runtime-image', 'java-runtime'
           )
           if (Test-Path $icon) {
             $jargs += '--icon'
