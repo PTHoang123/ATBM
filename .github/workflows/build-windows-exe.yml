@@ -43,7 +43,23 @@ jobs:
         shell: pwsh
         run: |
           $jar = Get-ChildItem pkg-input\*.jar | Select-Object -First 1 -ExpandProperty Name
-          jpackage --name ATBMTool --input pkg-input --main-jar $jar --main-class com.atbm.App --type exe --app-version 1.0.0 --icon src\main\resources\app.ico --win-console
+          $icon = 'src\\main\\resources\\app.ico'
+          $jargs = @(
+            '--name', 'ATBMTool',
+            '--input', 'pkg-input',
+            '--main-jar', $jar,
+            '--main-class', 'com.atbm.App',
+            '--type', 'exe',
+            '--app-version', '1.0.0',
+            '--win-console'
+          )
+          if (Test-Path $icon) {
+            $jargs += '--icon'
+            $jargs += $icon
+          } else {
+            Write-Host "Icon not found at $icon — building without --icon"
+          }
+          jpackage @jargs
 
       - name: Upload installer
         uses: actions/upload-artifact@v4
