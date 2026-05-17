@@ -1,0 +1,54 @@
+name: Build Windows EXE
+
+on:
+  push:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build-exe:
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      - name: Cache Maven local repository
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+
+      - name: Build fat JAR
+        run: mvn -B -DskipTests clean package
+
+      - name: Install WiX (required by jpackage)
+        shell: pwsh
+        run: |
+          choco install wixtoolset -y
+
+      - name: Prepare input directory
+        run: |
+          mkdir pkg-input
+          copy target\*.jar pkg-input\
+
+      - name: Run jpackage to create exe installer
+        shell: pwsh
+        run: |
+          $jar = Get-ChildItem pkg-input\*.jar | Select-Object -First 1 -ExpandProperty Name
+          jpackage --name ATBMTool --input pkg-input --main-jar $jar --main-class com.atbm.App --type exe --app-version 1.0.0 --icon src\main\resources\app.ico --win-console
+
+      - name: Upload installer
+        uses: actions/upload-artifact@v4
+        with:
+          name: atbm-windows-installer
+          path: |
+            *.exe
+            *.msi
