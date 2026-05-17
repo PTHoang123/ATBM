@@ -116,7 +116,7 @@ public class AlgorithmPanel extends JPanel {
         gbc.gridy++;
         content.add(createControlCard(algorithms), gbc);
 
-        if (mode != PanelMode.SYMMETRIC && mode != PanelMode.HASH) {
+        if (mode == PanelMode.SIGNATURE) {
             gbc.gridy++;
             content.add(createTipCard(), gbc);
         }
